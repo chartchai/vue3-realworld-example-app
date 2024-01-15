@@ -19,6 +19,7 @@
             active-class="active"
             :name="link.name"
             :params="link.params"
+            :aria-label="link.title"
           >
             <i
               v-if="link.icon"
@@ -33,11 +34,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import type { RouteParams } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import type { AppRouteNames } from 'src/router'
 import { useUserStore } from 'src/store/user'
-import { computed } from 'vue'
-import type { RouteParams } from 'vue-router'
 
 interface NavLink {
   name: AppRouteNames
@@ -91,5 +92,4 @@ const allNavLinks = computed<NavLink[]>(() => [
 const navLinks = computed(() => allNavLinks.value.filter(
   l => l.display === displayStatus.value || l.display === 'all',
 ))
-
 </script>

@@ -1,6 +1,6 @@
 import { ROUTES } from './constant'
 
-describe('Article', () => {
+describe('article', () => {
   beforeEach(() => {
     cy.intercept('GET', /articles\?limit/, { fixture: 'articles.json' })
     cy.intercept('GET', /articles\/.+/, { fixture: 'article.json' })
@@ -32,6 +32,9 @@ describe('Article', () => {
     })
 
     it('should render markdown correctly', () => {
+      cy.login()
+      cy.visit(ROUTES.ARTICLE)
+
       cy.get('.article-content').within(() => {
         cy.get('h1')
           .should('contain', 'Article body')

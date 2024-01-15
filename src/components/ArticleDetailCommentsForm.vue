@@ -39,22 +39,21 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useProfile } from 'src/composable/useProfile'
 import { api } from 'src/services'
-import { useUserStore } from 'src/store/user'
-import { computed, ref } from 'vue'
 import type { Comment } from 'src/services/api'
+import { useUserStore } from 'src/store/user'
 
 interface Props {
   articleSlug: string
 }
-interface Emits {
-  (e: 'add-comment', comment: Comment): void
-}
 
 const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  (e: 'addComment', comment: Comment): void
+}>()
 
 const { user } = storeToRefs(useUserStore())
 
@@ -63,12 +62,11 @@ const { profile } = useProfile({ username })
 
 const comment = ref('')
 
-const submitComment = async () => {
+async function submitComment() {
   const newComment = await api.articles
     .createArticleComment(props.articleSlug, { comment: { body: comment.value } })
     .then(res => res.data.comment)
-  emit('add-comment', newComment)
+  emit('addComment', newComment)
   comment.value = ''
 }
-
 </script>

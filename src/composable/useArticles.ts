@@ -1,46 +1,51 @@
-import type { AppRouteNames } from 'src/router'
-import { pageToOffset, api } from 'src/services'
-import type { Article } from 'src/services/api'
-import useAsync from 'src/utils/use-async'
 import type { ComputedRef } from 'vue'
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import type { AppRouteNames } from 'src/router'
+import { api, pageToOffset } from 'src/services'
+import type { Article } from 'src/services/api'
+import useAsync from 'src/utils/use-async'
 
-export function useArticles () {
+export function useArticles() {
   const { articlesType, tag, username, metaChanged } = useArticlesMeta()
 
   const articles = ref<Article[]>([])
   const articlesCount = ref(0)
   const page = ref(1)
 
-  async function fetchArticles (): Promise<void> {
+  async function fetchArticles(): Promise<void> {
     articles.value = []
     let responsePromise: null | Promise<{ articles: Article[], articlesCount: number }> = null
 
     if (articlesType.value === 'my-feed') {
       responsePromise = api.articles.getArticlesFeed(pageToOffset(page.value))
         .then(res => res.data)
-    } else if (articlesType.value === 'tag-feed' && tag.value) {
+    }
+    else if (articlesType.value === 'tag-feed' && tag.value) {
       responsePromise = api.articles.getArticles({ tag: tag.value, ...pageToOffset(page.value) })
         .then(res => res.data)
-    } else if (articlesType.value === 'user-feed' && username.value) {
+    }
+    else if (articlesType.value === 'user-feed' && username.value) {
       responsePromise = api.articles.getArticles({ author: username.value, ...pageToOffset(page.value) })
         .then(res => res.data)
-    } else if (articlesType.value === 'user-favorites-feed' && username.value) {
+    }
+    else if (articlesType.value === 'user-favorites-feed' && username.value) {
       responsePromise = api.articles.getArticles({ favorited: username.value, ...pageToOffset(page.value) })
         .then(res => res.data)
-    } else if (articlesType.value === 'global-feed') {
+    }
+    else if (articlesType.value === 'global-feed') {
       responsePromise = api.articles.getArticles(pageToOffset(page.value))
         .then(res => res.data)
     }
 
-    if (responsePromise !== null) {
-      const response = await responsePromise
-      articles.value = response.articles
-      articlesCount.value = response.articlesCount
-    } else {
+    if (responsePromise === null) {
       console.error(`Articles type "${articlesType.value}" not supported`)
+      return
     }
+
+    const response = await responsePromise
+    articles.value = response.articles
+    articlesCount.value = response.articlesCount
   }
 
   const changePage = (value: number): void => {
@@ -54,8 +59,10 @@ export function useArticles () {
   const { active: articlesDownloading, run: runWrappedFetchArticles } = useAsync(fetchArticles)
 
   watch(metaChanged, async () => {
-    if (page.value !== 1) changePage(1)
-    else await runWrappedFetchArticles()
+    if (page.value === 1)
+      await runWrappedFetchArticles()
+    else
+      changePage(1)
   })
 
   watch(page, runWrappedFetchArticles)
@@ -76,8 +83,8 @@ export function useArticles () {
 export type ArticlesType = 'global-feed' | 'my-feed' | 'tag-feed' | 'user-feed' | 'user-favorites-feed'
 
 export const articlesTypes: ArticlesType[] = ['global-feed', 'my-feed', 'tag-feed', 'user-feed', 'user-favorites-feed']
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-export const isArticlesType = (type: any): type is ArticlesType => articlesTypes.includes(type)
+
+export const isArticlesType = (type: unknown): type is ArticlesType => articlesTypes.includes(type as ArticlesType)
 
 const routeNameToArticlesType: Partial<Record<AppRouteNames, ArticlesType>> = {
   'global-feed': 'global-feed',
@@ -93,7 +100,7 @@ interface UseArticlesMetaReturn {
   articlesType: ComputedRef<ArticlesType>
   metaChanged: ComputedRef<string>
 }
-function useArticlesMeta (): UseArticlesMetaReturn {
+function useArticlesMeta(): UseArticlesMetaReturn {
   const route = useRoute()
 
   const tag = ref('')
@@ -102,9 +109,10 @@ function useArticlesMeta (): UseArticlesMetaReturn {
 
   watch(
     () => route.name,
-    routeName => {
+    (routeName) => {
       const possibleArticlesType = routeNameToArticlesType[routeName as AppRouteNames]
-      if (!isArticlesType(possibleArticlesType)) return
+      if (!isArticlesType(possibleArticlesType))
+        return
 
       articlesType.value = possibleArticlesType
     },
@@ -113,20 +121,18 @@ function useArticlesMeta (): UseArticlesMetaReturn {
 
   watch(
     () => route.params.username,
-    usernameParam => {
-      if (usernameParam !== username.value) {
+    (usernameParam) => {
+      if (usernameParam !== username.value)
         username.value = typeof usernameParam === 'string' ? usernameParam : ''
-      }
     },
     { immediate: true },
   )
 
   watch(
     () => route.params.tag,
-    tagParam => {
-      if (tagParam !== tag.value) {
+    (tagParam) => {
+      if (tagParam !== tag.value)
         tag.value = typeof tagParam === 'string' ? tagParam : ''
-      }
     },
     { immediate: true },
   )

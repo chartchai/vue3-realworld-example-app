@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { dateFilter } from 'src/utils/filters'
 
 describe('# Date filters', () => {
@@ -5,6 +6,6 @@ describe('# Date filters', () => {
     const dateString = '2019-01-01 00:00:00'
     const result = dateFilter(dateString)
 
-    expect(result).to.equal('January 1')
+    expect(result).toBe('January 1')
   })
 })

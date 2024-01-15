@@ -7,6 +7,7 @@
             <fieldset class="form-group">
               <input
                 v-model="form.title"
+                aria-label="Title"
                 type="text"
                 class="form-control form-control-lg"
                 placeholder="Article Title"
@@ -15,6 +16,7 @@
             <fieldset class="form-group">
               <input
                 v-model="form.description"
+                aria-label="Description"
                 type="text"
                 class="form-control form-control-lg"
                 placeholder="What's this article about?"
@@ -23,6 +25,7 @@
             <fieldset class="form-group">
               <textarea
                 v-model="form.body"
+                aria-label="Body"
                 :rows="8"
                 class="form-control"
                 placeholder="Write your article (in markdown)"
@@ -31,6 +34,7 @@
             <fieldset class="form-group">
               <input
                 v-model="newTag"
+                aria-label="Tags"
                 type="text"
                 class="form-control"
                 placeholder="Enter tags"
@@ -44,8 +48,12 @@
                   class="tag-default tag-pill"
                 >
                   <i
+                    role="button"
+                    tabindex="0"
+                    :aria-label="`Delete tag: ${tag}`"
                     class="ion-close-round"
                     @click="removeTag(tag)"
+                    @keypress.enter="removeTag(tag)"
                   />
                   {{ tag }}
                 </span>
@@ -66,10 +74,10 @@
 </template>
 
 <script setup lang="ts">
-import { api } from 'src/services'
-import type { Article } from 'src/services/api'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { api } from 'src/services'
+import type { Article } from 'src/services/api'
 
 interface FormState {
   title: string
@@ -90,15 +98,15 @@ const form: FormState = reactive({
 })
 
 const newTag = ref<string>('')
-const addTag = () => {
+function addTag() {
   form.tagList.push(newTag.value.trim())
   newTag.value = ''
 }
-const removeTag = (tag: string) => {
+function removeTag(tag: string) {
   form.tagList = form.tagList.filter(t => t !== tag)
 }
 
-async function fetchArticle (slug: string) {
+async function fetchArticle(slug: string) {
   const article = await api.articles.getArticle(slug).then(res => res.data.article)
 
   // FIXME: I always feel a little wordy here
@@ -108,18 +116,18 @@ async function fetchArticle (slug: string) {
   form.tagList = article.tagList
 }
 
-onMounted(() => {
-  if (slug.value) fetchArticle(slug.value)
+onMounted(async () => {
+  if (slug.value)
+    await fetchArticle(slug.value)
 })
 
-const onSubmit = async () => {
+async function onSubmit() {
   let article: Article
-  if (slug.value) {
+  if (slug.value)
     article = await api.articles.updateArticle(slug.value, { article: form }).then(res => res.data.article)
-  } else {
+  else
     article = await api.articles.createArticle({ article: form }).then(res => res.data.article)
-  }
+
   return router.push({ name: 'article', params: { slug: article.slug } })
 }
-
 </script>

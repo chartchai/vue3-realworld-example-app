@@ -1,18 +1,18 @@
-import { marked } from 'marked'
+/* eslint-disable antfu/consistent-list-newline */
 import insane from 'insane'
+import { marked } from 'marked'
 
 export default (markdown?: string): string => {
-  if (!markdown) return ''
-  const html = marked(markdown, {
-    // Fixme: ts-jest import.meta not support
-    // baseUrl: import.meta.env.BASE_URL,
-  })
+  if (!markdown)
+    return ''
+  const html = marked(markdown)
 
+  // eslint-disable-next-line ts/no-unsafe-return,ts/no-unsafe-call
   return insane(html, {
     allowedTags: ['a', 'article', 'b', 'blockquote', 'br', 'caption', 'code', 'del', 'details', 'div', 'em',
-      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'ins', 'kbd', 'li', 'main', 'ol',
-      'p', 'pre', 'section', 'span', 'strike', 'strong', 'sub', 'summary', 'sup', 'table',
-      'tbody', 'td', 'th', 'thead', 'tr', 'u', 'ul', 'input'],
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'input', 'ins', 'kbd', 'li', 'main',
+      'ol', 'p', 'pre', 'section', 'span', 'strike', 'strong', 'sub', 'summary', 'sup',
+      'table', 'tbody', 'td', 'th', 'thead', 'tr', 'u', 'ul'],
     allowedAttributes: {
       a: ['href', 'name', 'target', 'title'],
       iframe: ['allowfullscreen', 'frameborder', 'src'],
@@ -30,11 +30,11 @@ export default (markdown?: string): string => {
       td: ['align'],
       input: ['disabled', 'type', 'checked'],
     },
-    filter: ({ tag, attrs }: {tag: string, attrs: Record<string, string>}) => {
+    filter: ({ tag, attrs }: { tag: string, attrs: Record<string, string> }) => {
       // Display checklist
-      if (tag === 'input') {
+      if (tag === 'input')
         return attrs.type === 'checkbox' && attrs.disabled === ''
-      }
+
       return true
     },
   })

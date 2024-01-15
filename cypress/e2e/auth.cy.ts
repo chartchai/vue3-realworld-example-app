@@ -1,7 +1,13 @@
 import { ROUTES } from './constant'
 
-describe('Auth', () => {
-  describe('Login and logout', () => {
+describe('auth', () => {
+  beforeEach(() => {
+    cy.intercept('GET', /users/, { fixture: 'user.json' }).as('getUser')
+    cy.intercept('GET', /tags/, { fixture: 'tags.json' }).as('getTags')
+    cy.intercept('GET', /articles/, { fixture: 'articles.json' }).as('getArticles')
+  })
+
+  describe('login and logout', () => {
     it('should login success when submit a valid login form', () => {
       cy.login()
 
@@ -9,6 +15,7 @@ describe('Auth', () => {
     })
 
     it('should logout when click logout button', () => {
+      cy.login()
       cy.get(`[href="${ROUTES.SETTINGS}"]`).click()
 
       cy.get('button.btn-outline-danger')
@@ -50,13 +57,25 @@ describe('Auth', () => {
     it('should not allow visiting login page when the user is logged in', () => {
       cy.login()
 
-      cy.visit('/#/login')
+      cy.visit(ROUTES.LOGIN)
 
       cy.url().should('match', /\/#\/$/)
     })
+
+    it('should has credential header after login success', () => {
+      cy.login()
+
+      cy.visit(ROUTES.SETTINGS)
+      cy.intercept('PUT', /user/).as('updateSettingsRequest')
+
+      cy.findByRole('textbox', { name: 'Username' }).type('foo')
+      cy.findByRole('button', { name: 'Update Settings' }).click()
+
+      cy.wait('@updateSettingsRequest').its('request.headers').should('have.property', 'authorization')
+    })
   })
 
-  describe('Register', () => {
+  describe('register', () => {
     it('should call register API and jump to home page when submit a valid form', () => {
       cy.intercept('POST', /users$/, { fixture: 'user.json' }).as('registerRequest')
       cy.visit(ROUTES.REGISTER)

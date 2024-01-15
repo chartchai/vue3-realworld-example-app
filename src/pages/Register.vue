@@ -23,11 +23,13 @@
 
           <form
             ref="formRef"
+            aria-label="Registration form"
             @submit.prevent="register"
           >
             <fieldset class="form-group">
               <input
                 v-model="form.username"
+                aria-label="Username"
                 class="form-control form-control-lg"
                 type="text"
                 required
@@ -37,6 +39,7 @@
             <fieldset class="form-group">
               <input
                 v-model="form.email"
+                aria-label="Email"
                 class="form-control form-control-lg"
                 type="email"
                 required
@@ -46,6 +49,7 @@
             <fieldset class="form-group">
               <input
                 v-model="form.password"
+                aria-label="Password"
                 class="form-control form-control-lg"
                 type="password"
                 :minLength="8"
@@ -68,11 +72,11 @@
 </template>
 
 <script setup lang="ts">
+import { reactive, ref } from 'vue'
 import { routerPush } from 'src/router'
 import { api, isFetchError } from 'src/services'
 import type { NewUser } from 'src/services/api'
 import { useUserStore } from 'src/store/user'
-import { reactive, ref } from 'vue'
 
 const formRef = ref<HTMLFormElement | null>(null)
 const form: NewUser = reactive({
@@ -85,19 +89,20 @@ const { updateUser } = useUserStore()
 
 const errors = ref()
 
-const register = async () => {
+async function register() {
   errors.value = {}
 
-  if (!formRef.value?.checkValidity()) return
+  if (!formRef.value?.checkValidity())
+    return
 
   try {
     const result = await api.users.createUser({ user: form })
     updateUser(result.data.user)
     await routerPush('global-feed')
-  } catch (e) {
-    if (isFetchError(e)) {
-      errors.value = e.error?.errors
-    }
+  }
+  catch (error) {
+    if (isFetchError(error))
+      errors.value = error.error?.errors
   }
 }
 </script>

@@ -7,11 +7,18 @@
             Your Settings
           </h1>
 
+          <ul class="error-messages">
+            <li v-for="(error, field) in errors" :key="field">
+              {{ field }} {{ error ? error[0] : '' }}
+            </li>
+          </ul>
+
           <form @submit.prevent="onSubmit">
             <fieldset>
               <fieldset class="form-group">
                 <input
                   v-model="form.image"
+                  aria-label="Avatar picture url"
                   type="text"
                   class="form-control"
                   placeholder="URL of profile picture"
@@ -20,6 +27,7 @@
               <fieldset class="form-group">
                 <input
                   v-model="form.username"
+                  aria-label="Username"
                   type="text"
                   class="form-control form-control-lg"
                   placeholder="Your name"
@@ -28,6 +36,7 @@
               <fieldset class="form-group">
                 <textarea
                   v-model="form.bio"
+                  aria-label="Bio"
                   class="form-control form-control-lg"
                   :rows="8"
                   placeholder="Short bio about you"
@@ -36,6 +45,7 @@
               <fieldset class="form-group">
                 <input
                   v-model="form.email"
+                  aria-label="Email"
                   type="email"
                   class="form-control form-control-lg"
                   placeholder="Email"
@@ -44,9 +54,10 @@
               <fieldset class="form-group">
                 <input
                   v-model="form.password"
+                  aria-label="New password"
                   type="password"
                   class="form-control form-control-lg"
-                  placeholder="New Password"
+                  placeholder="New password"
                 >
               </fieldset>
               <button
@@ -63,6 +74,7 @@
 
           <button
             class="btn btn-outline-danger"
+            aria-label="Logout"
             @click="onLogout"
           >
             Or click here to logout.
@@ -74,30 +86,41 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
 import { routerPush } from 'src/router'
-import { api } from 'src/services'
+import { api, isFetchError } from 'src/services'
 import type { UpdateUser } from 'src/services/api'
 import { useUserStore } from 'src/store/user'
-import { computed, onMounted, reactive } from 'vue'
 
 const form: UpdateUser = reactive({})
 
 const userStore = useUserStore()
+const errors = ref()
 
-const onSubmit = async () => {
-  const filteredForm = Object.entries(form).reduce((a, [k, v]) => v === null ? a : { ...a, [k]: v }, {})
-  const userData = await api.user.updateCurrentUser({ user: filteredForm }).then(res => res.data.user)
-  userStore.updateUser(userData)
-  await routerPush('profile', { username: userData.username })
+async function onSubmit() {
+  errors.value = {}
+
+  try {
+    // eslint-disable-next-line unicorn/no-array-reduce, ts/no-unsafe-assignment
+    const filteredForm = Object.entries(form).reduce((form, [k, v]) => v === null ? form : Object.assign(form, { [k]: v }), {})
+    const userData = await api.user.updateCurrentUser({ user: filteredForm }).then(res => res.data.user)
+    userStore.updateUser(userData)
+    await routerPush('profile', { username: userData.username })
+  }
+  catch (error) {
+    if (isFetchError(error))
+      errors.value = error.error?.errors
+  }
 }
 
-const onLogout = async () => {
+async function onLogout() {
   userStore.updateUser(null)
   await routerPush('global-feed')
 }
 
 onMounted(async () => {
-  if (!userStore.isAuthorized) return await routerPush('login')
+  if (!userStore.isAuthorized)
+    return await routerPush('login')
 
   form.image = userStore.user?.image
   form.username = userStore.user?.username
@@ -106,11 +129,10 @@ onMounted(async () => {
 })
 
 const isButtonDisabled = computed(() =>
-  form.image === userStore.user?.image &&
-      form.username === userStore.user?.username &&
-      form.bio === userStore.user?.bio &&
-      form.email === userStore.user?.email &&
-      !form.password,
+  form.image === userStore.user?.image
+  && form.username === userStore.user?.username
+  && form.bio === userStore.user?.bio
+  && form.email === userStore.user?.email
+  && !form.password,
 )
-
 </script>

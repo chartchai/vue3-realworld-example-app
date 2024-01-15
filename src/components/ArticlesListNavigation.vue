@@ -23,11 +23,11 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import type { RouteParams } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import type { ArticlesType } from 'src/composable/useArticles'
 import type { AppRouteNames } from 'src/router'
-import { computed } from 'vue'
-import type { RouteParams } from 'vue-router'
 import { useUserStore } from '../store/user'
 
 interface ArticlesListNavLink {
@@ -99,5 +99,4 @@ const show = computed<Record<ArticlesType, boolean>>(() => ({
 }))
 
 const links = computed<ArticlesListNavLink[]>(() => allLinks.value.filter(link => show.value[link.name]))
-
 </script>
