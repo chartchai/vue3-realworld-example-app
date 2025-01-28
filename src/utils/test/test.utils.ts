@@ -31,15 +31,15 @@ interface RenderOptionsArgs {
 const scheduler = typeof setImmediate === 'function' ? setImmediate : setTimeout
 
 export function flushPromises(): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     scheduler(resolve, 0)
   })
 }
 
-export function renderOptions(): RenderOptions
-export function renderOptions(args: Partial<Omit<RenderOptionsArgs, 'initialRoute'>>): RenderOptions
-export async function renderOptions(args: (Partial<RenderOptionsArgs> & { initialRoute: RouteLocationRaw })): Promise<RenderOptions>
-export function renderOptions(args: Partial<RenderOptionsArgs> = {}): RenderOptions | Promise<RenderOptions> {
+export function renderOptions<C>(): RenderOptions<C>
+export function renderOptions<C>(args: Partial<Omit<RenderOptionsArgs, 'initialRoute'>>): RenderOptions<C>
+export async function renderOptions<C>(args: (Partial<RenderOptionsArgs> & { initialRoute: RouteLocationRaw })): Promise<RenderOptions<C>>
+export function renderOptions<C>(args: Partial<RenderOptionsArgs> = {}): RenderOptions<C> | Promise<RenderOptions<C>> {
   const router = args.router || createTestRouter()
 
   const result = {
@@ -63,10 +63,10 @@ export function renderOptions(args: Partial<RenderOptionsArgs> = {}): RenderOpti
   const { initialRoute } = args
 
   if (!initialRoute)
-    return result
+    return result as RenderOptions<C>
 
-  return new Promise((resolve) => {
-    void router.replace(initialRoute).then(() => resolve(result))
+  return new Promise(resolve => {
+    void router.replace(initialRoute).then(() => resolve(result as RenderOptions<C>))
   })
 }
 
@@ -78,7 +78,6 @@ export function asyncWrapper(component: ReturnType<typeof defineComponent>, prop
         { id: 'root' },
         h(Suspense, null, {
           default() {
-            // eslint-disable-next-line ts/no-unsafe-argument
             return h(component, props)
           },
           fallback: h('div', 'Loading...'),
@@ -166,7 +165,7 @@ export function setupMockServer(...listeners: Listener[]) {
   }
 
   const server = setupServer(
-    ...listeners.map((args) => {
+    ...listeners.map(args => {
       let [method, path, status, response] = parseArgs(args)
       method = method.toLowerCase()
       return http[method as 'all'](`${import.meta.env.VITE_API_HOST}${path}`, () => {
@@ -198,7 +197,7 @@ export function setupMockServer(...listeners: Listener[]) {
 
   function use(...listeners: Listener[]) {
     originalUse(
-      ...listeners.map((args) => {
+      ...listeners.map(args => {
         let [method, path, status, response] = parseArgs(args)
         method = method.toLowerCase()
         return http[method as 'all'](`${import.meta.env.VITE_API_HOST}${path}`, () => {
