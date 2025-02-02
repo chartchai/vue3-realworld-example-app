@@ -50,4 +50,4 @@ jobs:
           username: ${{ secrets.SSH_USER_NAME }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-           sudo chown -R ubuntu /var/www/html
+           sudo chown -R root /var/www/html
